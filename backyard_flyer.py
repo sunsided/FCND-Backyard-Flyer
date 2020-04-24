@@ -1,7 +1,7 @@
 import argparse
 import time
 from enum import Enum
-from queue import que
+from typing import List
 
 import numpy as np
 
@@ -89,12 +89,11 @@ class BackyardFlyer(Drone):
             if not self.armed:
                 self.manual_transition()
 
-    def calculate_box(self):
+    def calculate_box(self) -> List[List[float]]:
         """
         1. Return waypoints to fly a box
         """
         target_altitude = 3
-        
         local_waypoints = [[10.0,  0.0, target_altitude],
                            [10.0, 10.0, target_altitude],
                            [ 0.0, 10.0, target_altitude],
