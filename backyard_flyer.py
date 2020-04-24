@@ -23,15 +23,18 @@ class BackyardFlyer(Drone):
 
     def __init__(self, connection):
         super().__init__(connection)
-        self.target_position = np.array([0.0, 0.0, 0.0])
-        self.all_waypoints = []
         self.in_mission = True
         self.check_state = {}
+        self.target_position = [0, 0, 0]
 
-        # initial state
+        # Prepare the plan.
+        self.target_altitude = 3
+        self.all_waypoints = self.calculate_box(self.target_altitude)
+
+        # Initial state.
         self.flight_state = States.MANUAL
 
-        # Register all your callbacks here
+        # Register all your callbacks here.
         self.register_callback(MsgID.LOCAL_POSITION, self.local_position_callback)
         self.register_callback(MsgID.LOCAL_VELOCITY, self.velocity_callback)
         self.register_callback(MsgID.STATE, self.state_callback)
@@ -41,16 +44,15 @@ class BackyardFlyer(Drone):
         This triggers when `MsgID.LOCAL_POSITION` is received and self.local_position contains new data
         """
         if self.flight_state == States.TAKEOFF:
-            # coordinate conversion
+            # Coordinate conversion.
             altitude = -1.0 * self.local_position[2]
 
-            # check if altitude is within 95% of target
+            # Check if altitude is within 95% of target.
             if altitude > 0.95 * self.target_position[2]:
-                self.all_waypoints = self.calculate_box()
                 self.waypoint_transition()
 
         elif self.flight_state == States.WAYPOINT:
-            # Determine distance to waypoint
+            # Determine distance to waypoint.
             target_xy = self.target_position[0:2]
             local_xy = self.local_position[0:2]
             distance = np.linalg.norm(target_xy - local_xy)
@@ -63,7 +65,7 @@ class BackyardFlyer(Drone):
                 else:
                     # Wait for the movement to settle, then initiate landing.
                     velocity_xy = self.local_velocity[0:2]
-                    if np.linalg.norm(velocity_xy) < 1.0:
+                    if np.linalg.norm(velocity_xy) < 0.5:
                         self.landing_transition()
 
     def velocity_callback(self):
@@ -86,14 +88,15 @@ class BackyardFlyer(Drone):
             if self.armed:
                 self.takeoff_transition()
         elif self.flight_state == States.DISARMING:
+            # Transitioning to manual control while being armed
+            # is dangerous, since we can't know the state of the manual controls.
             if not self.armed:
                 self.manual_transition()
 
-    def calculate_box(self) -> List[List[float]]:
+    def calculate_box(self, target_altitude: int) -> List[List[float]]:
         """
         1. Return waypoints to fly a box
         """
-        target_altitude = 3
         local_waypoints = [[10.0,  0.0, target_altitude],
                            [10.0, 10.0, target_altitude],
                            [ 0.0, 10.0, target_altitude],
@@ -111,7 +114,7 @@ class BackyardFlyer(Drone):
         self.take_control()
         self.arm()
 
-        # set the current location to be the home position
+        # Set the current location to be the home position.
         self.set_home_position(self.global_position[0],
                                self.global_position[1],
                                self.global_position[2])
@@ -126,9 +129,8 @@ class BackyardFlyer(Drone):
         """
         print("takeoff transition")
 
-        target_altitude = 3
-        self.target_position[2] = target_altitude
-        self.takeoff(target_altitude)
+        self.target_position[2] = self.target_altitude
+        self.takeoff(self.target_altitude)
         self.flight_state = States.TAKEOFF
 
     def waypoint_transition(self):
@@ -143,9 +145,9 @@ class BackyardFlyer(Drone):
         # and we'd always try to fly to the next waypoint without
         # having to keep track of a separate index.
         # A trajectory planner could issue an entirely new set of
-        # waypoints ever once in a while (according to current conditions)
+        # waypoints every once in a while (according to current conditions)
         # and this logic would still apply (sans concurrency issues, but
-        # then again, we have the GIL).
+        # then again, in Python we have the GIL).
         self.target_position = self.all_waypoints.pop(0)
 
         north, east = self.target_position[0], self.target_position[1]
