@@ -1,5 +1,5 @@
 # FCND - Backyard Flyer Project
-In this project, you'll set up a state machine using event-driven programming to autonomously flying a drone. You will be using flying a quadcopter in Unity simulator. After completing this assignment, you'll be familiar with sending commands and receiving incoming data from the drone. 
+In this project, you'll set up a state machine using event-driven programming to autonomously flying a drone. You will be using flying a quadcopter in Unity simulator. After completing this assignment, you'll be familiar with sending commands and receiving incoming data from the drone.
 
 The python code you write is similar to how the drone would be controlled from a ground station computer or an onboard flight computer. Since communication with the drone is done using MAVLink, you will be able to use your code to control an PX4 quadcopter autopilot with very little modification!
 
@@ -134,7 +134,7 @@ The telemetry data is automatically logged in "Logs\TLog.txt" or "Logs\TLog-manu
 * `MsgID.GLOBAL_POSITION`: time (ms), longitude (deg), latitude (deg), altitude (meter)
 * `MsgID.GLOBAL_HOME`: time (ms), longitude (deg), latitude (deg), altitude (meter)
 * `MsgID.LOCAL_POSITION`: time (ms), north (meter), east (meter), down (meter)
-* `MsgID.LOCAL_VELOCITY`: time (ms), north (meter), east (meter), down (meter) 
+* `MsgID.LOCAL_VELOCITY`: time (ms), north (meter), east (meter), down (meter)
 
 
 #### Reading Telemetry Logs
@@ -180,7 +180,7 @@ def state_callback(self):
         	self.state = States.MANUAL
 ```
 
-This is a callback on the state message. It only checks anything if it's in the DISARMING state. If it detects that the drone is successfully disarmed, it sets the mode back to manual and terminates the mission.       
+This is a callback on the state message. It only checks anything if it's in the DISARMING state. If it detects that the drone is successfully disarmed, it sets the mode back to manual and terminates the mission.
 
 ### Running the State Machine
 
